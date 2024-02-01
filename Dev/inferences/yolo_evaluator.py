@@ -8,8 +8,8 @@ import threading
 
 #import datetime
 #import time
-from utils.JsonCreation import make_json_file
-from utils.ImageMining import get_image_info
+from utils.json_creation import make_json_file
+from utils.image_mining import get_image_info
 import psutil
 import os
 
