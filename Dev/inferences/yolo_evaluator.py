@@ -14,7 +14,7 @@ import psutil
 import os
 
 model = YOLO('model/best.pt')#load model insert the way to trained model
-
+pictures_folder = "iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/"
 class ImgProcessor(threading.Thread):
     def __init__(self, image_path):
         threading.Thread.__init__(self)
@@ -24,7 +24,6 @@ class ImgProcessor(threading.Thread):
         self.rajado = 0
 
     def run(self):#remove json creation, this code only will really run the code, start aplication
-
         image = cv2.imread(self.image_path)#load image
         image = cv2.resize(image, (640, 640))#redim image to neural network size difined in train
         results = model(source=image,show_labels=False,show_conf=False,show_boxes=False)#load each image to show labels,conf and boxes set True
@@ -101,26 +100,27 @@ class MyHandler(FileSystemEventHandler):
 
         # Libere o semáforo
         self.semaphore.release()
-
+    print(os.getcwd())
     def on_modified(self, event):#event is a return from FileSystemEventHandler class
         if event.event_type == "modified":
             # wait x minutes (implemente a lógica de espera aqui)
 
-            for farmers_path in os.listdir("/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/"):#directory
-                full_farmers_path = "/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/" + farmers_path
-                print("Full farmers path: ",full_farmers_path)
+            for farmers_path in os.listdir("../../../../"+pictures_folder):#directory
+                full_farmers_path = "../../../../"+pictures_folder + farmers_path
+
                 for file_path in os.listdir(full_farmers_path):#directory
 
-                    full_image_path = "/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/nome_data_hora/" + file_path
+                    full_image_path = "../../../../"+pictures_folder + farmers_path +"/"+ file_path
                     previous_folder = os.path.dirname(full_image_path)
                     thread = threading.Thread(target=self.process_image_in_thread, args=(full_image_path, previous_folder))#new thread creation
                     thread.start()
                     thread.join()#if remove infinite threads will be created
-                os.rename("/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/" + farmers_path, "/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/processadas/" + farmers_path)
+                os.rename("../../../../"+pictures_folder + farmers_path, "../../../../iniciacao_cientifica/Estudo_Yolo/dataset/processadas/" + farmers_path)
 
 event_handler = MyHandler()
 
 observer = Observer()
-observer.schedule(event_handler, path='/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/', recursive=True)
+print(os.listdir('../../../../')[1])
+observer.schedule(event_handler, path='../../../../'+pictures_folder, recursive=True)
 observer.start()
 observer.join()

@@ -3,7 +3,7 @@ import os
 from utils.image_mining import get_image_info
 
 def make_json_file(arq_file, new_data, image_path):
-    print(arq_file,new_data,image_path)
+
     try:
         with open(arq_file, "r+") as arq_open:
             try:
