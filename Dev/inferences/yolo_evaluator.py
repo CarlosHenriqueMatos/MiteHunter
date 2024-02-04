@@ -65,11 +65,10 @@ class ImgProcessor(threading.Thread):
             classes.append((cls.item(),conf.item(),x1,y1,x2,y2))
         image_info = get_image_info(self.image_path)
         
-        return {"id":image_info['name'].split("_")[0],
-                "cultivo_id":1,
-                "img": image_info['name'],
-                "img_proc": classes,
-                "date_time": image_info['data'],
+        return {"cultivo_id":image_info['cultivo_id'],
+                "imgOrig": image_info['name'],
+                "imgProc": classes,
+                "data_Amos": image_info['date_amos'],
                 "rajado": self.rajado,
                 "macropilis": self.macropilis,
                 "californicus": self.californicus
@@ -100,7 +99,7 @@ class MyHandler(FileSystemEventHandler):
 
         # Libere o semáforo
         self.semaphore.release()
-    print(os.getcwd())
+
     def on_modified(self, event):#event is a return from FileSystemEventHandler class
         if event.event_type == "modified":
             # wait x minutes (implemente a lógica de espera aqui)

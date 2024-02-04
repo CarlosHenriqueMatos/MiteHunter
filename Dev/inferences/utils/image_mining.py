@@ -1,20 +1,20 @@
 from PIL import Image
 import os
-import datetime
 
 def get_image_info(image_path):
+   print(image_path)
+   l = image_path.split("/")
+   image_metadata = l[len(l)-2]
+   email = image_metadata.split("_")[0]
+   cultivo_id = image_metadata.split("_")[1]
+   image_data = image_metadata.split("_")[2]
+   day = image_data[0:2]
+   month = image_data[2:4]
+   year = image_data[4:9]
+   date = f'{day}-{month}-{year}'
+   
+   return {"date_amos": date,'cultivo_id':cultivo_id ,"name": email}
 
-   stat = os.stat(image_path)#get the image metadata
-
-   creation_time = stat.st_ctime
-
-   creation_date = datetime.datetime.fromtimestamp(creation_time)
-
-   date = creation_date.strftime("%d-%m-%Y")
-
-   path = os.path.abspath(image_path)
-
-   name = os.path.basename(path)
-
-
-   return {"data": date, "name": name}
+if __name__ == "__main__":
+   image_info = get_image_info("/home/carlos/Imagens/carlos@gmail.com_123_04022024/123465.png")
+   print(image_info)
