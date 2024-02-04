@@ -8,34 +8,35 @@ import threading
 
 #import datetime
 #import time
-from utils.json_creation import make_json_file
+from utils.creation_data import make_json_file
 from utils.image_mining import get_image_info
 import psutil
 import os
 
-model = YOLO('model/best.pt')
+model = YOLO('model/best.pt')#load model insert the way to trained model
 
 class ImgProcessor(threading.Thread):
     def __init__(self, image_path):
         threading.Thread.__init__(self)
-        self.image_path = image_path
+        self.image_path = image_path#file path image folder
         self.californicus = 0
         self.macropilis = 0
         self.rajado = 0
 
     def run(self):#remove json creation, this code only will really run the code, start aplication
 
-        image = cv2.imread(self.image_path)
-        image = cv2.resize(image, (640, 640))
-        results = model(source=image,show_labels=False,show_conf=False,show_boxes=False)
+        image = cv2.imread(self.image_path)#load image
+        image = cv2.resize(image, (640, 640))#redim image to neural network size difined in train
+        results = model(source=image,show_labels=False,show_conf=False,show_boxes=False)#load each image to show labels,conf and boxes set True
+        #initializing json informations
         non_overlapping_boxes = []
         x1=0
         y1=0
         x2=0
         y2=0
         classes = []
-        for box, conf, cls in zip(results[0].boxes.xyxy, results[0].boxes.conf, results[0].boxes.cls):
-            x1, y1, x2, y2 = box.tolist()
+        for box, conf, cls in zip(results[0].boxes.xyxy, results[0].boxes.conf, results[0].boxes.cls):# for to get box in the objects, confiance and class
+            x1, y1, x2, y2 = box.tolist()#locate of the boxes
             is_overlapping = False
             for existing_box in non_overlapping_boxes:
                 existing_x1, existing_y1, existing_x2, existing_y2 = existing_box
@@ -65,13 +66,14 @@ class ImgProcessor(threading.Thread):
             classes.append((cls.item(),conf.item(),x1,y1,x2,y2))
         image_info = get_image_info(self.image_path)
         
-        return {"californicus": self.californicus,
-                "macropilis": self.macropilis,
+        return {"id":image_info['name'].split("_")[0],
+                "cultivo_id":1,
+                "img": image_info['name'],
+                "img_proc": classes,
+                "date_time": image_info['data'],
                 "rajado": self.rajado,
-                "id":image_info['name'].split("_")[0],
-                "imgOrig": image_info['name'],
-                "imgProc": classes,
-                "data": image_info['data']
+                "macropilis": self.macropilis,
+                "californicus": self.californicus
                 } #This is the paramethers from JSON
 
 
@@ -95,29 +97,30 @@ class MyHandler(FileSystemEventHandler):
         self.semaphore.acquire()
 
         with self.lock:
-            make_json_file("Morango.json", data)
-            
+            make_json_file("Morango.json", data,image_path)
+
         # Libere o semáforo
         self.semaphore.release()
 
-        os.rename(image_path, os.path.join("/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/", os.path.basename(image_path)))
-
-    def on_modified(self, event):
+    def on_modified(self, event):#event is a return from FileSystemEventHandler class
         if event.event_type == "modified":
             # wait x minutes (implemente a lógica de espera aqui)
 
-            for image_path in os.listdir("/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/amostras/nome_data_hora/"):
-                full_image_path = "/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/amostras/nome_data_hora/" + image_path
-                previous_folder = os.path.dirname(full_image_path)
+            for farmers_path in os.listdir("/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/"):#directory
+                full_farmers_path = "/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/" + farmers_path
+                print("Full farmers path: ",full_farmers_path)
+                for file_path in os.listdir(full_farmers_path):#directory
 
-                thread = threading.Thread(target=self.process_image_in_thread, args=(full_image_path, previous_folder))
-                thread.start()
-                thread.join()#if remove infinite threads will be created
-              
+                    full_image_path = "/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/nome_data_hora/" + file_path
+                    previous_folder = os.path.dirname(full_image_path)
+                    thread = threading.Thread(target=self.process_image_in_thread, args=(full_image_path, previous_folder))#new thread creation
+                    thread.start()
+                    thread.join()#if remove infinite threads will be created
+                os.rename("/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/" + farmers_path, "/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/processadas/" + farmers_path)
 
 event_handler = MyHandler()
 
 observer = Observer()
-observer.schedule(event_handler, path='/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/amostras/nome_data_hora', recursive=True)
+observer.schedule(event_handler, path='/home/carlos/Documentos/iniciacao_cientifica/Estudo_Yolo/dataset/agricultores/', recursive=True)
 observer.start()
 observer.join()
